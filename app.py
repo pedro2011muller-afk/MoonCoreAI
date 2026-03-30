@@ -1,33 +1,26 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
 import random
 
-# memória
 historico = []
 
-# base de conhecimento
 base = {
     "oi": ["Oi! 😄", "E aí!", "Olá!"],
-    "como você está": ["Estou funcionando perfeitamente 😎", "Tudo certo por aqui!"],
+    "como você está": ["Estou bem 😎", "Tudo certo!"],
     "qual seu nome": ["Sou a MoonCore 🤖"],
-    "o que você faz": ["Converso com você e evoluo 🚀"]
+    "qual é sua comida favorita": ["Infelizmente eu não tenho comida favorita, pois eu sou uma IA."],
+    "o que você faz": ["Converso com você 🚀"],
+    "tchau": ["Até mais! 👋", "Falou 😎"]
 }
 
-def detectar_resposta(msg):
-    perguntas = list(base.keys())
-    respostas = list(base.values())
+def pontuar(msg, pergunta):
+    palavras_msg = msg.split()
+    palavras_pergunta = pergunta.split()
 
-    textos = perguntas + [msg]
+    score = 0
+    for p in palavras_pergunta:
+        if p in palavras_msg:
+            score += 1
 
-    vectorizer = TfidfVectorizer().fit_transform(textos)
-    similaridade = cosine_similarity(vectorizer[-1], vectorizer[:-1])
-
-    indice = similaridade.argmax()
-
-    if similaridade[0][indice] > 0.3:
-        return random.choice(respostas[indice])
-    
-    return None
+    return score
 
 
 def responder(msg):
@@ -46,14 +39,23 @@ def responder(msg):
         for item in reversed(historico):
             if isinstance(item, dict) and "nome" in item:
                 return f"Seu nome é {item['nome']} 😉"
-        return "Você não me disse seu nome ainda 😢"
+        return "Você ainda não me disse seu nome 😢"
 
-    # 🤖 IA por similaridade
-    resposta = detectar_resposta(msg)
-    if resposta:
-        return resposta
+    # 🤖 similaridade leve (sem sklearn)
+    melhor_score = 0
+    melhor_resposta = None
 
-    # 🎯 contexto simples
+    for pergunta in base:
+        score = pontuar(msg, pergunta)
+
+        if score > melhor_score:
+            melhor_score = score
+            melhor_resposta = random.choice(base[pergunta])
+
+    if melhor_score > 0:
+        return melhor_resposta
+
+    # 🎯 contexto
     if len(historico) > 1:
         ultima = historico[-2]
 
@@ -61,9 +63,9 @@ def responder(msg):
             if "triste" in ultima:
                 return "Quer conversar sobre isso? 😔"
             if "feliz" in ultima:
-                return "Que bom 😄"
+                return "Que bom ouvir isso 😄"
 
-    # 🎲 fallback inteligente
+    # 🎲 fallback
     return random.choice([
         "Hmm... interessante 👀",
         "Pode explicar melhor?",
