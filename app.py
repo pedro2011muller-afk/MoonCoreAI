@@ -3,6 +3,31 @@ import os
 
 app = Flask(__name__)
 
+# Memória simples
+historico = []
+
+def responder(msg):
+    msg = msg.lower()
+
+    if "oi" in msg or "ola" in msg:
+        return "Oi! Como posso te ajudar? 😊"
+
+    elif "tudo bem" in msg:
+        return "Estou funcionando perfeitamente 😎"
+
+    elif "seu nome" in msg:
+        return "Sou a MoonCore, sua IA 😏"
+
+    elif "hora" in msg:
+        from datetime import datetime
+        return f"Agora são {datetime.now().strftime('%H:%M')}"
+
+    elif "tchau" in msg:
+        return "Até mais! 👋"
+
+    else:
+        return "Hmm... ainda estou aprendendo 🤔"
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -11,8 +36,9 @@ def home():
 def chat():
     user_msg = request.json.get("message")
 
-    # lógica simples (você pode melhorar depois)
-    resposta = f"MoonCore: você disse '{user_msg}'"
+    historico.append(user_msg)
+
+    resposta = responder(user_msg)
 
     return jsonify({"response": resposta})
 
