@@ -1,43 +1,72 @@
-from flask import Flask, request, jsonify, render_template
-import os
-import requests
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import random
 
-app = Flask(__name__)
+# memória
+historico = []
 
-API_KEY = os.environ.get("OPENAI_API_KEY")
+# base de conhecimento
+base = {
+    "oi": ["Oi! 😄", "E aí!", "Olá!"],
+    "como você está": ["Estou funcionando perfeitamente 😎", "Tudo certo por aqui!"],
+    "qual seu nome": ["Sou a MoonCore 🤖"],
+    "o que você faz": ["Converso com você e evoluo 🚀"]
+}
 
-def responder_ia(msg):
-    url = "https://api.openai.com/v1/chat/completions"
+def detectar_resposta(msg):
+    perguntas = list(base.keys())
+    respostas = list(base.values())
 
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json"
-    }
+    textos = perguntas + [msg]
 
-    data = {
-        "model": "gpt-4o-mini",
-        "messages": [
-            {"role": "user", "content": msg}
-        ]
-    }
+    vectorizer = TfidfVectorizer().fit_transform(textos)
+    similaridade = cosine_similarity(vectorizer[-1], vectorizer[:-1])
 
-    response = requests.post(url, headers=headers, json=data)
-    res = response.json()
+    indice = similaridade.argmax()
 
-    return res["choices"][0]["message"]["content"]
+    if similaridade[0][indice] > 0.3:
+        return random.choice(respostas[indice])
+    
+    return None
 
-@app.route("/")
-def home():
-    return render_template("index.html")
 
-@app.route("/chat", methods=["POST"])
-def chat():
-    user_msg = request.json.get("message")
+def responder(msg):
+    global historico
 
-    resposta = responder_ia(user_msg)
+    msg = msg.lower()
+    historico.append(msg)
 
-    return jsonify({"response": resposta})
+    # 🧠 memória de nome
+    if "meu nome é" in msg:
+        nome = msg.split("meu nome é")[-1].strip()
+        historico.append({"nome": nome})
+        return f"Prazer, {nome} 😎"
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    if "meu nome" in msg:
+        for item in reversed(historico):
+            if isinstance(item, dict) and "nome" in item:
+                return f"Seu nome é {item['nome']} 😉"
+        return "Você não me disse seu nome ainda 😢"
+
+    # 🤖 IA por similaridade
+    resposta = detectar_resposta(msg)
+    if resposta:
+        return resposta
+
+    # 🎯 contexto simples
+    if len(historico) > 1:
+        ultima = historico[-2]
+
+        if isinstance(ultima, str):
+            if "triste" in ultima:
+                return "Quer conversar sobre isso? 😔"
+            if "feliz" in ultima:
+                return "Que bom 😄"
+
+    # 🎲 fallback inteligente
+    return random.choice([
+        "Hmm... interessante 👀",
+        "Pode explicar melhor?",
+        "Ainda estou aprendendo 🤖",
+        "Isso parece importante 😎"
+    ])
