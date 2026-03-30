@@ -1,32 +1,30 @@
 from flask import Flask, request, jsonify, render_template
 import os
+import requests
 
 app = Flask(__name__)
 
-# Memória simples
-historico = []
+API_KEY = os.environ.get("OPENAI_API_KEY")
 
-def responder(msg):
-    msg = msg.lower()
+def responder_ia(msg):
+    url = "https://api.openai.com/v1/chat/completions"
 
-    if "oi" in msg or "ola" in msg:
-        return "Oi! Como posso te ajudar? 😊"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
 
-    elif "tudo bem" in msg:
-        return "Estou funcionando perfeitamente 😎"
+    data = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "user", "content": msg}
+        ]
+    }
 
-    elif "seu nome" in msg:
-        return "Sou a MoonCore, sua IA 😏"
+    response = requests.post(url, headers=headers, json=data)
+    res = response.json()
 
-    elif "hora" in msg:
-        from datetime import datetime
-        return f"Agora são {datetime.now().strftime('%H:%M')}"
-
-    elif "tchau" in msg:
-        return "Até mais! 👋"
-
-    else:
-        return "Hmm... ainda estou aprendendo 🤔"
+    return res["choices"][0]["message"]["content"]
 
 @app.route("/")
 def home():
@@ -36,9 +34,7 @@ def home():
 def chat():
     user_msg = request.json.get("message")
 
-    historico.append(user_msg)
-
-    resposta = responder(user_msg)
+    resposta = responder_ia(user_msg)
 
     return jsonify({"response": resposta})
 
