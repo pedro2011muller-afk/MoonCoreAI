@@ -20,18 +20,43 @@ body {
     margin: 20px auto;
     display: flex;
     flex-direction: column;
+    height: calc(100vh - 80px);
 }
 
 #chatBox {
-    height: 400px;
+    flex: 1;
     overflow-y: auto;
-    border: 1px solid #444;
     padding: 10px;
-    margin-bottom: 10px;
     background-color: #2e2e2e;
     border-radius: 15px;
+    display: flex;
+    flex-direction: column;
 }
 
+/* Mensagens estilo WhatsApp */
+.message-user {
+    background-color: #4a90e2;
+    padding: 10px 15px;
+    border-radius: 20px 20px 0 20px;
+    margin: 5px;
+    align-self: flex-end; /* direita */
+    max-width: 75%;
+    word-wrap: break-word;
+    color: #fff;
+}
+
+.message-ai {
+    background-color: #333;
+    padding: 10px 15px;
+    border-radius: 20px 20px 20px 0;
+    margin: 5px;
+    align-self: flex-start; /* esquerda */
+    max-width: 75%;
+    word-wrap: break-word;
+    color: #fff;
+}
+
+/* Input e botão */
 textarea {
     width: 100%;
     padding: 10px;
@@ -55,40 +80,11 @@ button {
     font-weight: bold;
 }
 
-/* ===== Mensagens estilo WhatsApp ===== */
-.message-user {
-    background-color: #4a90e2;
-    padding: 10px 15px;
-    border-radius: 20px 20px 0 20px;
-    margin: 5px;
-    display: inline-block;
-    max-width: 75%;
-    align-self: flex-end;
-    word-wrap: break-word;
-    color: #fff;
-}
-
-.message-ai {
-    background-color: #333;
-    padding: 10px 15px;
-    border-radius: 20px 20px 20px 0;
-    margin: 5px;
-    display: inline-block;
-    max-width: 75%;
-    align-self: flex-start;
-    word-wrap: break-word;
-    color: #fff;
-}
-
-/* ===== Responsivo ===== */
+/* Responsivo */
 @media screen and (max-width: 768px) {
     .chat-container {
         max-width: 100%;
         margin: 10px;
-        height: 100vh;
-    }
-    #chatBox {
-        height: 70vh;
     }
     textarea {
         min-height: 60px;
