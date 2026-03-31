@@ -4,10 +4,19 @@ function sendMessage() {
     if(msg === "") return;
 
     let chatBox = document.getElementById("chatBox");
-    chatBox.innerHTML += '<div class="message-user">'+msg+'</div>';
 
-    // Simular digitação da IA
-    chatBox.innerHTML += '<div class="message-ai" id="aiTyping">Digitando...</div>';
+    // mensagem do usuário
+    let userDiv = document.createElement("div");
+    userDiv.className = "message-user";
+    userDiv.innerHTML = msg;
+    chatBox.appendChild(userDiv);
+
+    // mensagem da IA com leve delay
+    let aiDiv = document.createElement("div");
+    aiDiv.className = "message-ai";
+    aiDiv.innerHTML = "Digitando...";
+    chatBox.appendChild(aiDiv);
+
     chatBox.scrollTop = chatBox.scrollHeight;
 
     fetch("/chat", {
@@ -17,20 +26,10 @@ function sendMessage() {
     })
     .then(res => res.json())
     .then(data => {
-        let aiDiv = document.getElementById("aiTyping");
-        aiDiv.innerHTML = '';
-        let resposta = data.response;
-        // efeito de digitação
-        let i = 0;
-        function digitar() {
-            if(i < resposta.length){
-                aiDiv.innerHTML += resposta.charAt(i);
-                i++;
-                setTimeout(digitar, 25);
-            }
-        }
-        digitar();
-        chatBox.scrollTop = chatBox.scrollHeight;
+        setTimeout(() => {
+            aiDiv.innerHTML = data.response;
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 200); // delay leve de 200ms para parecer natural
     });
 
     input.value = "";
