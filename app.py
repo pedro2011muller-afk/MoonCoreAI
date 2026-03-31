@@ -1,11 +1,15 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify
 import random
-from difflib import SequenceMatcher
+import json
 import os
 
 app = Flask(__name__)
 
-# Memória e histórico
+# Carregar base de respostas externas
+with open("respostas.json", "r", encoding="utf-8") as f:
+    base = {item["pergunta"].lower(): [item["resposta"]] for item in json.load(f)}
+
+# Histórico de mensagens e memória simples
 historico = []
 memoria = {
     "nome": None,
@@ -14,34 +18,8 @@ memoria = {
     "humor": None
 }
 
-# Base de respostas
-base = {
-    "oi": ["Oi! 😄", "E aí!", "Olá! Como vai?"],
-    "bom dia": ["Bom dia! ☀️", "Dia ótimo pra gente conversar 😎"],
-    "boa tarde": ["Boa tarde! 😄", "Espero que esteja tendo uma boa tarde!"],
-    "boa noite": ["Boa noite! 🌙", "Durma bem depois! 😴"],
-    "como você está": ["Estou bem 😎", "Tudo certo!", "Animado para conversar com você!"],
-    "qual seu nome": ["Sou a MoonCore 🤖", "MoonCore AI à disposição!"],
-    "o que você faz": ["Converso com você 🚀", "Estou aqui pra bater papo e aprender contigo 😎"],
-    "tchau": ["Até mais! 👋", "Falou 😎", "Até a próxima!"],
-    "obrigado": ["De nada! 😄", "Imagina! 😉"]
-}
-
-# Sinônimos simples
-sinonimos = {
-    "oi": ["oi", "ola", "olá", "e aí", "hey"],
-    "tchau": ["tchau", "adeus", "falou", "até mais"]
-}
-
-# Desenvolvedores autorizados
-devs_autorizados = {"Defall": "10102811"}  # usuário: senha
-
-def substituir_sinonimos(msg):
-    for chave, lista in sinonimos.items():
-        for s in lista:
-            if s in msg:
-                return chave
-    return msg
+# Função de correspondência
+from difflib import SequenceMatcher
 
 def melhor_correspondencia(msg):
     melhor_score = 0
@@ -56,57 +34,28 @@ def melhor_correspondencia(msg):
 def responder(msg):
     global historico, memoria
     msg = msg.lower()
-    msg = substituir_sinonimos(msg)
     historico.append(msg)
 
-    # Memória
+    # Memória simples
     if "meu nome é" in msg:
         memoria["nome"] = msg.split("meu nome é")[-1].strip()
-        return f"Prazer, {memoria['nome']}! 😎"
+        return f"Prazer, {memoria['nome']}!"
     if "qual meu nome" in msg:
-        return f"Seu nome é {memoria.get('nome', 'você ainda não me disse 😢')}"
+        return f"Seu nome é {memoria.get('nome', 'você ainda não me disse')}"
 
-    if "meu hobby é" in msg:
-        memoria["hobby"] = msg.split("meu hobby é")[-1].strip()
-        return f"Que legal! Vou lembrar que seu hobby é {memoria['hobby']} 😄"
-    if "qual meu hobby" in msg:
-        return f"Seu hobby é {memoria.get('hobby', 'você ainda não me contou 😢')}"
-
-    if "meu animal de estimação é" in msg:
-        memoria["pet"] = msg.split("meu animal de estimação é")[-1].strip()
-        return f"Que legal! Vou lembrar que seu pet é {memoria['pet']} 😄"
-    if "qual meu pet" in msg:
-        return f"Seu pet é {memoria.get('pet', 'você ainda não me contou 😢')}"
-
-    if "estou triste" in msg or "me sinto triste" in msg:
-        memoria["humor"] = "triste"
-        return "Sinto muito 😔 Quer conversar sobre isso?"
-    if "estou feliz" in msg or "me sinto feliz" in msg:
-        memoria["humor"] = "feliz"
-        return "Que bom 😄 Fico feliz por você!"
-
-    # Aprendizado de sessão (funciona apenas para devs via painel)
-    if msg.startswith("ensine "):
-        return "Esse recurso é exclusivo para desenvolvedores 😎"
-
+    # Resposta padrão
     resp = melhor_correspondencia(msg)
     if resp:
         if memoria.get("nome"):
-            templates = [
-                resp + f" {memoria['nome']} 😄",
-                f"{memoria['nome']}, {resp}",
-                resp
-            ]
-            return random.choice(templates)
+            return f"{resp} {memoria['nome']}"
         return resp
 
     # fallback
     respostas_fallback = [
-        "Hmm... interessante 👀 Me conte mais!",
-        "Pode explicar melhor? Quero entender 😄",
-        "Ainda estou aprendendo 🤖, mas estou te ouvindo!",
-        "Isso parece importante 😎 Conte-me mais detalhes!",
-        "Uau, que legal! 😲 Me fale mais sobre isso!"
+        "Interessante, me conte mais.",
+        "Pode explicar melhor?",
+        "Ainda estou aprendendo, mas estou te ouvindo.",
+        "Uau, que legal!"
     ]
     return random.choice(respostas_fallback)
 
@@ -119,35 +68,6 @@ def home():
 def chat():
     data = request.get_json()
     msg = data.get("message", "")
-    resposta = responder(msg)
-    return jsonify({"response": resposta})
-
-# Login desenvolvedor
-@app.route("/dev", methods=["GET", "POST"])
-def dev():
-    if request.method == "POST":
-        usuario = request.form.get("usuario")
-        senha = request.form.get("senha")
-        if devs_autorizados.get(usuario) == senha:
-            return render_template("dev_panel.html", usuario=usuario)
-        else:
-            return "Acesso negado 😅"
-    return render_template("login_dev.html")
-
-# Chat de ensino para devs
-@app.route("/dev/chat", methods=["POST"])
-def dev_chat():
-    data = request.get_json()
-    msg = data.get("message", "")
-    # Permite ensinar novas respostas
-    if msg.startswith("ensine "):
-        try:
-            partes = msg.split("ensine")[1].split("->")
-            pergunta, resposta = partes[0].strip().lower(), partes[1].strip()
-            base[pergunta] = [resposta]
-            return jsonify({"response": "Aprendi isso! 😎"})
-        except:
-            return jsonify({"response": "Formato incorreto. Use: ensine <pergunta> -> <resposta>"})
     resposta = responder(msg)
     return jsonify({"response": resposta})
 
