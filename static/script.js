@@ -6,6 +6,10 @@ function sendMessage() {
     let chatBox = document.getElementById("chatBox");
     chatBox.innerHTML += '<div class="message-user">'+msg+'</div>';
 
+    // Simular digitação da IA
+    chatBox.innerHTML += '<div class="message-ai" id="aiTyping">Digitando...</div>';
+    chatBox.scrollTop = chatBox.scrollHeight;
+
     fetch("/chat", {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
@@ -13,7 +17,19 @@ function sendMessage() {
     })
     .then(res => res.json())
     .then(data => {
-        chatBox.innerHTML += '<div class="message-ai">'+data.response+'</div>';
+        let aiDiv = document.getElementById("aiTyping");
+        aiDiv.innerHTML = '';
+        let resposta = data.response;
+        // efeito de digitação
+        let i = 0;
+        function digitar() {
+            if(i < resposta.length){
+                aiDiv.innerHTML += resposta.charAt(i);
+                i++;
+                setTimeout(digitar, 25);
+            }
+        }
+        digitar();
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
