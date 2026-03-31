@@ -2,23 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>MoonCore AI - Chat Público</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoonCore AI</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<div class="sidebar">
-  <h2>MoonCore AI</h2>
-  <button class="tablink active" onclick="openTab('public')">Chat Público</button>
-</div>
-
-<div class="main">
-  <div id="public" class="tabcontent" style="display:block;">
+<div class="chat-container">
     <div id="chatBox"></div>
-    <input type="text" id="msgInput" placeholder="Digite sua mensagem...">
+    <textarea id="msgInput" placeholder="Digite sua mensagem..."></textarea>
     <button onclick="sendMessage()">Enviar</button>
-  </div>
 </div>
-
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
