@@ -1,163 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <title>MoonCore AI</title>
-    <style>
-        /* Layout geral */
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #1e1e1e;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        /* Cabeçalho */
-        #header {
-            background: #121212;
-            padding: 15px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            border-bottom: 1px solid #333;
-        }
-
-        /* Área de chat */
-        #chat {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Mensagens */
-        .msg {
-            max-width: 70%;
-            padding: 12px 16px;
-            margin: 6px;
-            border-radius: 18px;
-            font-size: 14px;
-            animation: fadeIn 0.2s ease;
-            word-wrap: break-word;
-        }
-
-        .user {
-            background: #4a4a4a;
-            align-self: flex-end;
-        }
-
-        .bot {
-            background: #2f2f2f;
-            align-self: flex-start;
-            position: relative;
-        }
-
-        /* Animação digitação */
-        .typing::after {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            margin-left: 4px;
-            background: white;
-            border-radius: 50%;
-            animation: blink 1s infinite;
-        }
-
-        @keyframes blink {
-            0%, 50%, 100% { opacity: 0; }
-            25%, 75% { opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Input */
-        #input-area {
-            display: flex;
-            padding: 10px;
-            background: #1e1e1e;
-            border-top: 1px solid #333;
-        }
-
-        input {
-            flex: 1;
-            padding: 14px;
-            border-radius: 25px;
-            border: none;
-            outline: none;
-            background: #2a2a2a;
-            color: white;
-            font-size: 14px;
-        }
-
-        button {
-            margin-left: 10px;
-            padding: 10px 16px;
-            border-radius: 25px;
-            border: none;
-            background: #555;
-            color: white;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        button:hover {
-            background: #777;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>MoonCore AI - Chat Público</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div id="header">MoonCore AI 🤖</div>
-    <div id="chat"></div>
-    <div id="input-area">
-        <input id="msg" placeholder="Digite sua mensagem...">
-        <button onclick="enviar()">Enviar</button>
-    </div>
+<div class="sidebar">
+  <h2>MoonCore AI</h2>
+  <button class="tablink active" onclick="openTab('public')">Chat Público</button>
+</div>
 
-    <script>
-        function adicionarMensagem(texto, classe, typing=false) {
-            const div = document.createElement("div");
-            div.className = "msg " + classe;
-            if(typing) div.classList.add("typing");
-            div.innerText = texto;
-            document.getElementById("chat").appendChild(div);
-            document.getElementById("chat").scrollTop = 999999;
-            return div;
-        }
+<div class="main">
+  <div id="public" class="tabcontent" style="display:block;">
+    <div id="chatBox"></div>
+    <input type="text" id="msgInput" placeholder="Digite sua mensagem...">
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
+</div>
 
-        function enviar() {
-            let msg = document.getElementById("msg").value.trim();
-            if(!msg) return;
-
-            // mensagem do usuário
-            adicionarMensagem(msg, "user");
-            document.getElementById("msg").value = "";
-
-            // mensagem do bot temporária "digitando"
-            let botMsg = adicionarMensagem("MoonCore está digitando...", "bot", true);
-
-            fetch("/chat", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({message: msg})
-            })
-            .then(res => res.json())
-            .then(data => {
-                botMsg.classList.remove("typing");
-                botMsg.innerText = data.response;
-            });
-        }
-
-        // tecla Enter envia
-        document.getElementById("msg").addEventListener("keypress", function(e) {
-            if(e.key === "Enter") enviar();
-        });
-    </script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
