@@ -4,9 +4,8 @@ import json
 import os
 import unicodedata
 import string
-from difflib import SequenceMatcher
-import requests
 from bs4 import BeautifulSoup
+import requests
 
 app = Flask(__name__)
 
@@ -20,7 +19,7 @@ if os.path.exists(JSON_FILE):
 else:
     base_data = []
 
-# Transformar em dicionário para correspondência rápida
+# Transformar em dicionário para busca rápida
 base = {item["pergunta"].lower(): [item["resposta"]] for item in base_data}
 
 # -------- MEMÓRIA SIMPLES --------
@@ -39,18 +38,6 @@ def limpar_texto(msg):
     msg = msg.translate(str.maketrans('', '', string.punctuation))
     return msg
 
-def melhor_correspondencia(msg):
-    msg = limpar_texto(msg)
-    melhor_score = 0
-    melhor_resposta = None
-    for pergunta, respostas in base.items():
-        p = limpar_texto(pergunta)
-        score = SequenceMatcher(None, msg, p).ratio()
-        if score > melhor_score:
-            melhor_score = score
-            melhor_resposta = random.choice(respostas)
-    return melhor_resposta if melhor_score > 0.5 else None
-
 # -------- FUNÇÃO DE BUSCA WIKIPÉDIA --------
 def buscar_wikipedia(termo):
     url = f"https://pt.wikipedia.org/wiki/{termo.replace(' ', '_')}"
@@ -59,7 +46,6 @@ def buscar_wikipedia(termo):
         if r.status_code != 200:
             return None
         soup = BeautifulSoup(r.text, 'html.parser')
-        # Pega primeiro parágrafo
         p = soup.find('p')
         if p:
             texto = p.get_text()
@@ -88,14 +74,19 @@ def responder(msg):
     if "como estou" in msg_clean and memoria.get("nome"):
         return f"{memoria['nome']}, você parece bem hoje!"
 
-    # -------- CORRESPONDÊNCIA COM BASE --------
-    resp = melhor_correspondencia(msg)
-    if resp:
-        if memoria.get("nome"):
-            return f"{resp} {memoria['nome']}"
-        return resp
+    # -------- CORRESPONDÊNCIA INTELIGENTE --------
+    # 1. Correspondência exata
+    for pergunta, respostas in base.items():
+        if msg_clean == pergunta.lower():
+            return random.choice(respostas)
 
-    # -------- BUSCA NA INTERNET (WIKIPÉDIA) --------
+    # 2. Palavras-chave
+    for pergunta, respostas in base.items():
+        palavras = pergunta.lower().split()
+        if any(palavra in msg_clean for palavra in palavras):
+            return random.choice(respostas)
+
+    # 3. Buscar na internet (Wikipédia)
     termo = msg_clean.replace("?", "").replace("como", "").strip()
     resposta_internet = buscar_wikipedia(termo)
     if resposta_internet:
@@ -106,7 +97,7 @@ def responder(msg):
             json.dump(base_data, f, ensure_ascii=False, indent=2)
         return resposta_internet
 
-    # -------- RESPOSTAS FALBACK --------
+    # 4. Fallback caso não encontre nada
     respostas_fallback = [
         "Interessante, me conte mais.",
         "Pode explicar melhor?",
