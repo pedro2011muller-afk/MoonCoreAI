@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Painel de Desenvolvedor</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="sidebar">
+  <h2>MoonCore AI - Dev</h2>
+  <button class="tablink active" onclick="openTab('dev')">Chat Dev</button>
+</div>
+
+<div class="main">
+  <div id="dev" class="tabcontent" style="display:block;">
+    <div id="devChatBox"></div>
+    <input type="text" id="devMsgInput" placeholder="Digite sua mensagem ou 'ensine ... -> ...'">
+    <button onclick="sendDevMessage()">Enviar</button>
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
