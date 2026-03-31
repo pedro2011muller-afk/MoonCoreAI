@@ -26,8 +26,7 @@ base = {item["pergunta"].lower(): [item["resposta"]] for item in base_data}
 historico = []
 memoria = {
     "nome": None,
-    "hobby": None,
-    "humor": None
+    "hobby": None
 }
 
 # -------- FUNÇÕES AUXILIARES --------
@@ -38,7 +37,6 @@ def limpar_texto(msg):
     msg = msg.translate(str.maketrans('', '', string.punctuation))
     return msg
 
-# -------- FUNÇÃO DE BUSCA WIKIPÉDIA --------
 def buscar_wikipedia(termo):
     url = f"https://pt.wikipedia.org/wiki/{termo.replace(' ', '_')}"
     try:
@@ -54,7 +52,7 @@ def buscar_wikipedia(termo):
         print("Erro ao buscar Wikipedia:", e)
         return None
 
-# -------- FUNÇÃO DE RESPOSTA AVANÇADA --------
+# -------- FUNÇÃO RESPONDER ROBUSTA --------
 def responder(msg):
     global historico, memoria, base_data, base
     msg_clean = msg.lower().strip()
@@ -74,19 +72,22 @@ def responder(msg):
     if "como estou" in msg_clean and memoria.get("nome"):
         return f"{memoria['nome']}, você parece bem hoje!"
 
-    # -------- CORRESPONDÊNCIA INTELIGENTE --------
+    # -------- CORRESPONDÊNCIA JSON --------
     for pergunta, respostas in base.items():
-        if msg_clean == pergunta.lower():  # exata
+        if msg_clean == pergunta.lower():
             return random.choice(respostas)
-    for pergunta, respostas in base.items():  # palavras-chave
+    for pergunta, respostas in base.items():
         palavras = pergunta.lower().split()
         if any(palavra in msg_clean for palavra in palavras):
             return random.choice(respostas)
 
-    # -------- BUSCA AVANÇADA NA INTERNET --------
-    resposta_internet = buscar_wikipedia(msg_clean)
+    # -------- LIMPAR PERGUNTA PARA BUSCA --------
+    termo = msg_clean.replace("?", "").replace("como", "").replace("o que", "").replace("qual", "").strip()
+
+    # -------- BUSCA WIKIPÉDIA --------
+    resposta_internet = buscar_wikipedia(termo)
     if not resposta_internet:
-        palavras_chave = [p for p in msg_clean.split() if len(p) > 3]  # evita palavras curtas
+        palavras_chave = [p for p in termo.split() if len(p) > 3]
         respostas_temp = []
         for palavra in palavras_chave:
             r = buscar_wikipedia(palavra)
@@ -105,10 +106,10 @@ def responder(msg):
 
     # -------- FALLBACK --------
     respostas_fallback = [
-        "Interessante, me conte mais.",
-        "Pode explicar melhor?",
-        "Ainda estou aprendendo, mas estou te ouvindo.",
-        "Uau, que legal!",
+        "Interessante, me conte mais sobre isso.",
+        "Não encontrei informações exatas, mas estou aprendendo sobre isso.",
+        "Ainda estou aprendendo, mas vou tentar ajudar.",
+        "Uau, que legal! Pode me explicar melhor?",
         "Hmm… não entendi direito, pode tentar de outra forma?"
     ]
     return random.choice(respostas_fallback)
@@ -127,5 +128,5 @@ def chat():
 
 # -------- INICIALIZAÇÃO --------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5000))  # Porta pronta para deploy ou local
     app.run(host="0.0.0.0", port=port)
