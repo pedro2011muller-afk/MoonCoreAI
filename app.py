@@ -34,7 +34,7 @@ sinonimos = {
 }
 
 # Desenvolvedores autorizados
-devs_autorizados = {"lucas123": "moon123"}  # usuário: senha
+devs_autorizados = {"Defall": "10102811"}  # usuário: senha
 
 def substituir_sinonimos(msg):
     for chave, lista in sinonimos.items():
