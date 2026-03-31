@@ -2,5 +2,10 @@
   {"pergunta": "oi", "resposta": "Oi! Como vai?"},
   {"pergunta": "qual seu nome", "resposta": "Sou a MoonCore."},
   {"pergunta": "como você está", "resposta": "Estou bem, obrigado."},
-  {"pergunta": "tchau", "resposta": "Até mais!"}
+  {"pergunta": "tchau", "resposta": "Até mais!"},
+  {"pergunta": "geladeira", "resposta": "A geladeira (ou refrigerador) é um eletrodoméstico essencial projetado para conservar alimentos e bebidas em baixas temperaturas. Funciona através de um ciclo de refrigeração que remove calor do interior (geralmente entre 1°C a 7°C), usando um fluido refrigerante, compressor e evaporador para evitar a deterioração. 
+Principais Usos e Características:
+Conservação: Mantém alimentos perecíveis frescos por mais tempo.
+Refrigeração e Congelamento: Resfria alimentos e produz gelo no freezer.
+Aplicações: Doméstica (cozinha) ou comercial (exposição de bebidas)."
 ]
