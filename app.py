@@ -54,7 +54,7 @@ def buscar_wikipedia(termo):
         print("Erro ao buscar Wikipedia:", e)
         return None
 
-# -------- FUNÇÃO DE RESPOSTA --------
+# -------- FUNÇÃO DE RESPOSTA AVANÇADA --------
 def responder(msg):
     global historico, memoria, base_data, base
     msg_clean = msg.lower().strip()
@@ -75,29 +75,35 @@ def responder(msg):
         return f"{memoria['nome']}, você parece bem hoje!"
 
     # -------- CORRESPONDÊNCIA INTELIGENTE --------
-    # 1. Correspondência exata
     for pergunta, respostas in base.items():
-        if msg_clean == pergunta.lower():
+        if msg_clean == pergunta.lower():  # exata
             return random.choice(respostas)
-
-    # 2. Palavras-chave
-    for pergunta, respostas in base.items():
+    for pergunta, respostas in base.items():  # palavras-chave
         palavras = pergunta.lower().split()
         if any(palavra in msg_clean for palavra in palavras):
             return random.choice(respostas)
 
-    # 3. Buscar na internet (Wikipédia)
-    termo = msg_clean.replace("?", "").replace("como", "").strip()
-    resposta_internet = buscar_wikipedia(termo)
+    # -------- BUSCA AVANÇADA NA INTERNET --------
+    resposta_internet = buscar_wikipedia(msg_clean)
+    if not resposta_internet:
+        palavras_chave = [p for p in msg_clean.split() if len(p) > 3]  # evita palavras curtas
+        respostas_temp = []
+        for palavra in palavras_chave:
+            r = buscar_wikipedia(palavra)
+            if r:
+                respostas_temp.append(r)
+        if respostas_temp:
+            resposta_internet = " ".join(respostas_temp[:2])
+
+    # Salva no JSON se encontrou
     if resposta_internet:
-        # Salva no JSON para cache
-        base[term := msg_clean] = [resposta_internet]
-        base_data.append({"pergunta": term, "resposta": resposta_internet})
+        base[msg_clean] = [resposta_internet]
+        base_data.append({"pergunta": msg_clean, "resposta": resposta_internet})
         with open(JSON_FILE, "w", encoding="utf-8") as f:
             json.dump(base_data, f, ensure_ascii=False, indent=2)
         return resposta_internet
 
-    # 4. Fallback caso não encontre nada
+    # -------- FALLBACK --------
     respostas_fallback = [
         "Interessante, me conte mais.",
         "Pode explicar melhor?",
