@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import random
-import os
 from difflib import SequenceMatcher
+import os
 
 app = Flask(__name__)
 
-# memória de sessão
+# Memória e histórico
 historico = []
 memoria = {
     "nome": None,
@@ -14,7 +14,7 @@ memoria = {
     "humor": None
 }
 
-# base inicial de respostas
+# Base de respostas
 base = {
     "oi": ["Oi! 😄", "E aí!", "Olá! Como vai?"],
     "bom dia": ["Bom dia! ☀️", "Dia ótimo pra gente conversar 😎"],
@@ -27,11 +27,14 @@ base = {
     "obrigado": ["De nada! 😄", "Imagina! 😉"]
 }
 
-# sinônimos simples
+# Sinônimos simples
 sinonimos = {
     "oi": ["oi", "ola", "olá", "e aí", "hey"],
     "tchau": ["tchau", "adeus", "falou", "até mais"]
 }
+
+# Desenvolvedores autorizados
+devs_autorizados = {"lucas123": "moon123"}  # usuário: senha
 
 def substituir_sinonimos(msg):
     for chave, lista in sinonimos.items():
@@ -56,29 +59,25 @@ def responder(msg):
     msg = substituir_sinonimos(msg)
     historico.append(msg)
 
-    # memória de nome
+    # Memória
     if "meu nome é" in msg:
-        nome = msg.split("meu nome é")[-1].strip()
-        memoria["nome"] = nome
-        return f"Prazer, {nome}! 😎"
+        memoria["nome"] = msg.split("meu nome é")[-1].strip()
+        return f"Prazer, {memoria['nome']}! 😎"
     if "qual meu nome" in msg:
         return f"Seu nome é {memoria.get('nome', 'você ainda não me disse 😢')}"
 
-    # memória de hobby
     if "meu hobby é" in msg:
         memoria["hobby"] = msg.split("meu hobby é")[-1].strip()
         return f"Que legal! Vou lembrar que seu hobby é {memoria['hobby']} 😄"
     if "qual meu hobby" in msg:
         return f"Seu hobby é {memoria.get('hobby', 'você ainda não me contou 😢')}"
 
-    # memória de pet
     if "meu animal de estimação é" in msg:
         memoria["pet"] = msg.split("meu animal de estimação é")[-1].strip()
         return f"Que legal! Vou lembrar que seu pet é {memoria['pet']} 😄"
     if "qual meu pet" in msg:
         return f"Seu pet é {memoria.get('pet', 'você ainda não me contou 😢')}"
 
-    # memória de humor
     if "estou triste" in msg or "me sinto triste" in msg:
         memoria["humor"] = "triste"
         return "Sinto muito 😔 Quer conversar sobre isso?"
@@ -86,20 +85,12 @@ def responder(msg):
         memoria["humor"] = "feliz"
         return "Que bom 😄 Fico feliz por você!"
 
-    # aprendizado de sessão
-    if "ensine" in msg:
-        try:
-            partes = msg.split("ensine")[1].split("->")
-            pergunta, resposta = partes[0].strip().lower(), partes[1].strip()
-            base[pergunta] = [resposta]
-            return "Aprendi isso! 😎"
-        except:
-            return "Formato incorreto. Use: ensine <pergunta> -> <resposta>"
+    # Aprendizado de sessão (funciona apenas para devs via painel)
+    if msg.startswith("ensine "):
+        return "Esse recurso é exclusivo para desenvolvedores 😎"
 
-    # melhor correspondência
     resp = melhor_correspondencia(msg)
     if resp:
-        # personalização com nome
         if memoria.get("nome"):
             templates = [
                 resp + f" {memoria['nome']} 😄",
@@ -119,12 +110,11 @@ def responder(msg):
     ]
     return random.choice(respostas_fallback)
 
-# rota principal
+# -------- ROTAS --------
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# rota de chat
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.get_json()
@@ -132,7 +122,36 @@ def chat():
     resposta = responder(msg)
     return jsonify({"response": resposta})
 
-# inicialização
+# Login desenvolvedor
+@app.route("/dev", methods=["GET", "POST"])
+def dev():
+    if request.method == "POST":
+        usuario = request.form.get("usuario")
+        senha = request.form.get("senha")
+        if devs_autorizados.get(usuario) == senha:
+            return render_template("dev_panel.html", usuario=usuario)
+        else:
+            return "Acesso negado 😅"
+    return render_template("login_dev.html")
+
+# Chat de ensino para devs
+@app.route("/dev/chat", methods=["POST"])
+def dev_chat():
+    data = request.get_json()
+    msg = data.get("message", "")
+    # Permite ensinar novas respostas
+    if msg.startswith("ensine "):
+        try:
+            partes = msg.split("ensine")[1].split("->")
+            pergunta, resposta = partes[0].strip().lower(), partes[1].strip()
+            base[pergunta] = [resposta]
+            return jsonify({"response": "Aprendi isso! 😎"})
+        except:
+            return jsonify({"response": "Formato incorreto. Use: ensine <pergunta> -> <resposta>"})
+    resposta = responder(msg)
+    return jsonify({"response": resposta})
+
+# Inicialização
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
