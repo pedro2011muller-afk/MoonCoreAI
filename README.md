@@ -1,2 +1,0 @@
-# MoonCoreAI
-Artificial Intelligence
